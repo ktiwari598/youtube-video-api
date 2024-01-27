@@ -28,7 +28,7 @@ import java.util.List;
 public class VideoDetailsService {
 
     private static final String YOUTUBE_API_ENDPOINT = "https://youtube.googleapis.com/youtube/v3/search?part=snippet&q=";
-    private static final String PREDEFINED_QUERY = "RollsRoyce";
+    private static final String PREDEFINED_QUERY = "StockMarket";
     @Value("${api.key}")
     private String apiKey;
 

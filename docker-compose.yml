@@ -1,0 +1,22 @@
+  version: "3.8"
+  services:
+    server:
+      container_name: "youtube-compose"
+      build: .
+      restart: always
+      ports:
+        - "8073:8072"
+      environment:
+        db_password: password
+        api_key: AIzaSyAszizirrQvlm0dZ91WTqBLsRLE3yoGkW8
+      depends_on:
+        - youtubedb-compose
+    youtubedb-compose:
+      container_name: "youtubedb-compose"
+      image: mysql
+      restart: always
+      ports:
+        - "3308:3306"
+      environment:
+        MYSQL_DATABASE: youtube
+        MYSQL_ROOT_PASSWORD: password

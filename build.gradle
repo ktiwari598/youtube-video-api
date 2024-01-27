@@ -8,8 +8,17 @@ group = 'com.fampay'
 version = '0.0.1-SNAPSHOT'
 
 java {
-	sourceCompatibility = '21'
+	sourceCompatibility = '17'
 }
+
+jar {
+	manifest {
+		attributes(
+				'Main-Class': 'com.fampay.youtube.YoutubeApplication'
+		)
+	}
+}
+
 
 configurations {
 	compileOnly {
