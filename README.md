@@ -6,7 +6,7 @@ date-time from YouTube and returns the video data for a given tag/search query i
 
 ## Prerequisites
 Before running the application, ensure you have the following prerequisites installed:
-- Java Development Kit (JDK) 17 or later
+- Java Development Kit (JDK) 17
 - Docker
 - Gradle
 
