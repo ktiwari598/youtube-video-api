@@ -7,11 +7,11 @@ import com.fampay.youtube.dto.YoutubeSearchResponseDTO;
 import com.fampay.youtube.dto.response.VideoDetailsDTO;
 import com.fampay.youtube.dto.response.VideoResponseDTO;
 import com.fampay.youtube.model.VideoDetailsModel;
+import com.fampay.youtube.repository.ApiKeyDetailsRepository;
 import com.fampay.youtube.repository.VideoDetailsRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -29,15 +29,17 @@ public class VideoDetailsService {
 
     private static final String YOUTUBE_API_ENDPOINT = "https://youtube.googleapis.com/youtube/v3/search?part=snippet&q=";
     private static final String PREDEFINED_QUERY = "StockMarket";
-    @Value("${api.key}")
-    private String apiKey;
 
     private final VideoDetailsRepository videoDetailsRepository;
+    private final ApiKeyDetailsRepository apiKeyDetailsRepository;
     private final RestTemplate restTemplate;
 
     @Autowired
-    public VideoDetailsService(VideoDetailsRepository videoDetailsRepository, RestTemplate restTemplate) {
+    public VideoDetailsService(VideoDetailsRepository videoDetailsRepository,
+                               ApiKeyDetailsRepository apiKeyDetailsRepository,
+                               RestTemplate restTemplate) {
         this.videoDetailsRepository = videoDetailsRepository;
+        this.apiKeyDetailsRepository = apiKeyDetailsRepository;
         this.restTemplate = restTemplate;
     }
 
@@ -53,6 +55,9 @@ public class VideoDetailsService {
         try {
             long startTime = System.currentTimeMillis();
             String publishAfterDateString = Instant.now().minusSeconds(3600).toString();
+            String apiKey = apiKeyDetailsRepository.findFirstApi()
+                    .orElseThrow(() -> new Exception("No API key present in table"))
+                    .getApiKey();
             String url = YOUTUBE_API_ENDPOINT + PREDEFINED_QUERY + "&order=date&type=video&publishedAfter="
                     + publishAfterDateString + "&key=" + apiKey;
             YoutubeSearchResponseDTO youtubeSearchResponseDTO = restTemplate.getForObject(url, YoutubeSearchResponseDTO.class);
@@ -64,6 +69,7 @@ public class VideoDetailsService {
             videoDetailsRepository.saveAll(videoDetailsModelList);
             log.info("Youtube API called and data fetched successfully in {}ms", System.currentTimeMillis() - startTime);
         } catch (Exception e) {
+            getNewApiKey(e.getMessage());
             log.error("Error occurred while getting video details from youtube search API", e);
         }
     }
@@ -105,6 +111,20 @@ public class VideoDetailsService {
                 .stream()
                 .map(this::convertToVideoDetailsDTO)
                 .toList();
+    }
+
+    private void getNewApiKey(String message) {
+        try {
+            if (message.startsWith("403 Forbidden")) {
+                Long id = apiKeyDetailsRepository.findFirstApi()
+                        .orElseThrow(() -> new Exception("No API key present in table"))
+                        .getId();
+                log.info("Deleting api key with id : {} as this has exceeded quota limit/expired", id);
+                apiKeyDetailsRepository.deleteById(id);
+            }
+        } catch (Exception e) {
+            log.error("Exception occurred while deleting current API key");
+        }
     }
 
     private VideoDetailsModel getVideoDetails(SearchResultDTO searchResultDTO) {

@@ -8,7 +8,6 @@
         - "8073:8072"
       environment:
         db_password: password
-        api_key: AIzaSyAszizirrQvlm0dZ91WTqBLsRLE3yoGkW8
       depends_on:
         - youtubedb-compose
     youtubedb-compose:
